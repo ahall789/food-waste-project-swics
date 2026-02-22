@@ -4,11 +4,14 @@ from pymongo import MongoClient
 import google.generativeai as genai
 import streamlit as st
 from pymongo.errors import ServerSelectionTimeoutError
+from utils.style import load_css
+
+load_css()
 
 MONGO_URI = "mongodb+srv://sakshikokane_db_user:xv2RDFTWbfZOAJQI@wastesless.mdemthv.mongodb.net/?appName=Wastesless"
 DB_NAME = "wasteless"
 
-API_KEY = "AIzaSyDzOhGdxJRkgaBcAQS7ItleetQZk1rDWPM"
+API_KEY = ""
 
 user = st.session_state.get("user")
 if not user or not user.get("username"):

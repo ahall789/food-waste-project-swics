@@ -1,7 +1,9 @@
 from datetime import datetime
 import streamlit as st
 import services
+from utils.style import load_css
 
+load_css()
 
 if "user" not in st.session_state:
     st.session_state.user = None
@@ -11,8 +13,6 @@ if st.session_state.user:
 else:
     st.switch_page("pages/login.py")
 
-
-st.set_page_config(page_title='Add Ingredients')
 
 st.markdown(f"""
 <div class="hero">

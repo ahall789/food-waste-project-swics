@@ -3,7 +3,9 @@ from typing import Optional
 
 import streamlit as st
 from services import get_user_by_username, update_user_food_preferences
+from utils.style import load_css
 
+load_css()
 
 # ---------------- Auth ----------------
 def get_current_username() -> Optional[str]:
