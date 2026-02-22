@@ -29,8 +29,9 @@ def logout():
 role = st.session_state.role
 
 logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
+
 ingredients = st.Page(
-    "ingredients.py",
+    "pages/ingredients.py",
     title="Ingredients",
     default=(role == None),
 )
