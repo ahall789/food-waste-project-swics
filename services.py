@@ -1,4 +1,3 @@
-from bson import ObjectId
 from datetime import datetime
 from typing import Any, Optional, Dict, List
 from db import get_collection
