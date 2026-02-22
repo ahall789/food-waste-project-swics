@@ -1,10 +1,12 @@
 import re
+from typing import Optional
+
 import streamlit as st
 from services import get_user_by_username, update_user_food_preferences
 
 
 # ---------------- Auth ----------------
-def get_current_username() -> str | None:
+def get_current_username() -> Optional[str]:
     """Gets the logged-in user from session state."""
     user = st.session_state.get("user")
     if not user:
