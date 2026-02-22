@@ -38,5 +38,3 @@ def get_user_ingredients(username: str) -> List[Dict[str, Any]]:
     )
 
     return ingredient_log.get("ingredients", []) if ingredient_log else []
-
-def
