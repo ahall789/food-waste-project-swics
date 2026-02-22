@@ -25,98 +25,77 @@ st.markdown(f"""
 
 st.subheader('Your Ingredients')
 
-ingredients = get_user_ingredients()
 if 'ingredient_rows' not in st.session_state:
-    st.session_state.ingredient_rows = [{
-        'name': '',
-        'is_expiring': False,
-        'days_until_expiry': 365,
-        'quantity': ''
-    }]
+    db_ingredients = services.get_user_ingredients(user['username'])
+
+    if db_ingredients:
+        st.session_state.ingredient_rows = [
+            {
+                'name': ing.get('name', ''),
+                'is_expiring': ing.get('is_expiring', False),
+                'days_until_expiry': ing.get('days_until_expiry', None),
+                'quantity': ing.get('quantity', '')
+            }
+            for ing in db_ingredients
+        ]
+    else:
+        st.session_state.ingredient_rows = [{
+            'name': '', 'is_expiring': False, 'days_until_expiry': None, 'quantity': ''
+        }]
+
 
 for i, row in enumerate(st.session_state.ingredient_rows):
-    col1, col2, col3, col4 = st.columns([2, 1, 2, 1])
-    with col1:
-        st.session_state.ingredient_rows[i]['name'] = st.text_input(
-            f'Name',
-            value=row['name'],
-            key=f'name_{i}',
-            placeholder='e.g. eggs'
-        )
-    with col2:
-        x = st.session_state.ingredient_rows[i]['is_expiring'] = st.checkbox(
-            'Expiring soon',
-            value=row['is_expiring'],
-            key=f'exp_{i}'
-        )
-        if x:
-            st.session_state.ingredient_rows[i]['days_until_expiry'] = st.number_input(
-                f'Days until expiry',
-                min_value = 0,
-                max_value = 365,
-                value=row['days_until_expiry'],
-                key=f'days_until_expiry_{i}'
+    with st.container():
+        col1, col2, col3, col4 = st.columns([2, 2, 1, 0.5])
+
+        with col1:
+            st.session_state.ingredient_rows[i]['name'] = st.text_input(
+                "Name", value=row['name'], key=f"name_{i}"
             )
 
-    with col3:
-        st.session_state.ingredient_rows[i]['quantity'] = st.text_input(
-            f'Quantity',
-            value=row['quantity'],
-            key=f'q_{i}',
-            placeholder='e.g. 1 cup, 500 grams, 3'
-        )
-    with col4:
-        if i > 0:
-            if st.button('✕', key=f'del_{i}'):
+        with col2:
+            st.session_state.ingredient_rows[i]['quantity'] = st.text_input(
+                "Quantity", value=row['quantity'], key=f"qty_{i}"
+            )
+
+        with col3:
+            is_exp = st.checkbox("Expiring?", value=row['is_expiring'], key=f"exp_{i}")
+            st.session_state.ingredient_rows[i]['is_expiring'] = is_exp
+
+            if is_exp:
+                st.session_state.ingredient_rows[i]['days_until_expiry'] = st.number_input(
+                    "Days", value=row['days_until_expiry'], min_value=0, key=f"days_{i}"
+                )
+
+        with col4:
+            st.write("##")
+            if st.button("✕", key=f"del_{i}"):
                 st.session_state.ingredient_rows.pop(i)
                 st.rerun()
+    st.divider()
 
-col_left, col_right = st.columns(2)
+c1, c2 = st.columns(2)
 
-with col_left:
-    if st.button('+ Add Another Ingredient'):
-        st.session_state.ingredient_rows = [{
-            'name': '',
-            'is_expiring': False,
-            'days_until_expiry': None,
-            'quantity': ''
-        }]
+with c1:
+    if st.button("➕ Add Extra Ingredient"):
+        # This adds a new empty dictionary to the list
+        st.session_state.ingredient_rows.append({
+            'name': '', 'is_expiring': False, 'days_until_expiry': 7, 'quantity': ''
+        })
         st.rerun()
 
-with col_right:
-    if st.button('Save to Pantry', type="primary"):
-        user = db.users.find_one({"username": st.session_state.role})
+with c2:
+    if st.button("💾 Save All to Database", type="primary"):
+        # Filter out rows where the name is empty before saving
+        to_save = [ing for ing in st.session_state.ingredient_rows if ing['name'].strip()]
 
-        if user:
-            formatted_ingredients = []
-            for row in st.session_state.ingredient_rows:
-                if row['name'].strip():
-                    formatted_ingredients.append({
-                        "name": row['name'].strip().lower(),
-                        "is_expiring": row['expiring'],
-                        "days_until_expiry": row['days_until_expiry'],
-                        "quantity": row['quantity'].strip().lower()
-                    })
+        if to_save:
+            with st.spinner("Saving to WasteLess DB..."):
+                success = services.set_user_ingredients(user['username'], to_save)
 
-            if formatted_ingredients:
-                log_entry = {
-                    "user_id": user["_id"],
-                    "session_id": "session_" + datetime.now().strftime("%Y%m%d%H%M"),
-                    "created_at": datetime.utcnow(),
-                    "ingredients": formatted_ingredients
-                }
-
-                db.ingredient_logs.insert_one(log_entry)
-                st.success("Ingredients saved to your log!")
-
-                st.session_state.ingredient_rows = [{
-                    'name': '',
-                    'is_expiring': False,
-                    'days_until_expiry': 365,
-                    'quantity': ''
-                }]
-                st.rerun()
-            else:
-                st.warning("Please add at least one ingredient.")
+                if success:
+                    st.success("Pantry updated!")
+                else:
+                    st.error("Could not save to database.")
         else:
-            st.error("User not found in database.")
+            st.warning("Please enter at least one ingredient name.")
