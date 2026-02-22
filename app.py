@@ -32,6 +32,5 @@ logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
 ingredients = st.Page(
     "ingredients.py",
     title="Ingredients",
-    icon=":material/ingredients:",
     default=(role == None),
 )
