@@ -10,12 +10,12 @@ import bcrypt
 import re
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="WasteLess — Login",
-    page_icon="🥦",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
+#st.set_page_config(
+   # page_title="WasteLess — Login",
+    #page_icon="🥦",
+    #layout="centered",
+    #initial_sidebar_state="collapsed",
+#)
 
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 from utils.style import load_css

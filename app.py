@@ -1,37 +1,32 @@
 import streamlit as st
 
-st.title("🎈 My new app")
-st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
+st.set_page_config(page_title="WasteLess", page_icon="🥦", layout="centered")
+
+# ---------- Define pages ----------
+login_page = st.Page(
+    "pages/login.py",
+    title="Login",
+    icon=":material/login:",
+    default=True,   # ⭐ this makes it the starting page
 )
 
-if "role" not in st.session_state:
-    st.session_state.role = None
-
-ROLES = [None, "Admin"]
-
-
-def login():
-
-    st.header("Log in")
-    role = st.selectbox("Choose your role", ROLES)
-
-    if st.button("Log in"):
-        st.session_state.role = role
-        st.rerun()
-
-
-def logout():
-    st.session_state.role = None
-    st.rerun()
-
-
-role = st.session_state.role
-
-logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
-
-ingredients = st.Page(
+ingredients_page = st.Page(
     "pages/ingredients.py",
     title="Ingredients",
-    default=(role == None),
+    icon=":material/restaurant:",
 )
+
+profile_page = st.Page(
+    "pages/profile.py",
+    title="Profile",
+    icon=":material/person:",
+)
+
+# ---------- Navigation ----------
+nav = st.navigation([
+    login_page,
+    ingredients_page,
+    profile_page,
+])
+
+nav.run()
