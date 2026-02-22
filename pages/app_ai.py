@@ -6,8 +6,6 @@ from pymongo import MongoClient #???
 import google.generativeai as genai
 import streamlit as st
 
-st.set_page_config(page_title="Wasteless - Ai", layout="centered")
-
 def get_db():
     try:
         # Use your Atlas connection string here
