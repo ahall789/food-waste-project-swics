@@ -1,43 +1,64 @@
 from datetime import datetime
 import streamlit as st
-import json
+import services
 
-from pymongo import MongoClient
 
-client = MongoClient("mongodb://localhost:27017")
-db = client["wasteless"]
+if "user" not in st.session_state:
+    st.session_state.user = None
 
-st.set_page_config(page_title='Add Ingredients', page_icon='🌱')
+if st.session_state.user:
+    user = st.session_state.user
+else:
+    st.switch_page("pages/login.py")
 
-if 'role' not in st.session_state:
-    st.session_state.role = "gorgia_betts"
+
+st.set_page_config(page_title='Add Ingredients')
+
 
 st.title('What is in your kitchen?')
-st.write(f"You are logged in as {st.session_state.role}.")
+st.write(f"You are logged in as {user['username']}"".")
 st.subheader('Your Ingredients')
 
 if 'ingredient_rows' not in st.session_state:
-    st.session_state.ingredient_rows = [{'name': '', 'expiring': False}]
-
-st.subheader('Your Ingredients')
+    st.session_state.ingredient_rows = [{
+        'name': '',
+        'is_expiring': False,
+        'days_until_expiry': 365,
+        'quantity': ''
+    }]
 
 for i, row in enumerate(st.session_state.ingredient_rows):
-    col1, col2, col3 = st.columns([4, 2, 1])
-
+    col1, col2, col3, col4 = st.columns([2, 1, 2, 1])
     with col1:
         st.session_state.ingredient_rows[i]['name'] = st.text_input(
-            f'Ingredient {i + 1}',
+            f'Name',
             value=row['name'],
-            key=f'ing_{i}',
+            key=f'name_{i}',
             placeholder='e.g. eggs'
         )
     with col2:
-        st.session_state.ingredient_rows[i]['expiring'] = st.checkbox(
+        x = st.session_state.ingredient_rows[i]['is_expiring'] = st.checkbox(
             'Expiring soon',
-            value=row['expiring'],
+            value=row['is_expiring'],
             key=f'exp_{i}'
         )
+        if x:
+            st.session_state.ingredient_rows[i]['days_until_expiry'] = st.number_input(
+                f'Days until expiry',
+                min_value = 0,
+                max_value = 365,
+                value=row['days_until_expiry'],
+                key=f'days_until_expiry_{i}'
+            )
+
     with col3:
+        st.session_state.ingredient_rows[i]['quantity'] = st.text_input(
+            f'Quantity',
+            value=row['quantity'],
+            key=f'q_{i}',
+            placeholder='e.g. 1 cup, 500 grams, 3'
+        )
+    with col4:
         if i > 0:
             if st.button('✕', key=f'del_{i}'):
                 st.session_state.ingredient_rows.pop(i)
@@ -47,11 +68,16 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     if st.button('+ Add Another Ingredient'):
-        st.session_state.ingredient_rows.append({'name': '', 'expiring': False})
+        st.session_state.ingredient_rows = [{
+            'name': '',
+            'is_expiring': False,
+            'days_until_expiry': None,
+            'quantity': ''
+        }]
         st.rerun()
 
 with col_right:
-    if st.button('✅ Save to Pantry', type="primary"):
+    if st.button('Save to Pantry', type="primary"):
         user = db.users.find_one({"username": st.session_state.role})
 
         if user:
@@ -61,7 +87,8 @@ with col_right:
                     formatted_ingredients.append({
                         "name": row['name'].strip().lower(),
                         "is_expiring": row['expiring'],
-                        "quantity": "not specified"
+                        "days_until_expiry": row['days_until_expiry'],
+                        "quantity": row['quantity'].strip().lower()
                     })
 
             if formatted_ingredients:
@@ -75,7 +102,12 @@ with col_right:
                 db.ingredient_logs.insert_one(log_entry)
                 st.success("Ingredients saved to your log!")
 
-                st.session_state.ingredient_rows = [{'name': '', 'expiring': False}]
+                st.session_state.ingredient_rows = [{
+                    'name': '',
+                    'is_expiring': False,
+                    'days_until_expiry': 365,
+                    'quantity': ''
+                }]
                 st.rerun()
             else:
                 st.warning("Please add at least one ingredient.")
