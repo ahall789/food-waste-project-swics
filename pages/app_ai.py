@@ -6,7 +6,7 @@ from pymongo import MongoClient #???
 import google.generativeai as genai
 import streamlit as st
 
-st.set_page_config(page_title="The title", layout="centered")
+st.set_page_config(page_title="Wasteless - Ai", layout="centered")
 
 def get_db():
     try:
@@ -15,7 +15,7 @@ def get_db():
         client.server_info() 
         return client["wasteless"]
     except Exception as e:
-        print(f"Database connection error: {e}")
+        st.error(f"Database connection error: {e}")
         return None
 
 db = get_db()
@@ -62,7 +62,7 @@ def promptAi(model, username):
 
     for i in fridge:
         for j in i.get["ingredients", []]:
-            name = item["name"]
+            name = item.get("name")
             ingredients.append(name)
             if j.get("is_expiring", False):
                 expiring.append(name)
@@ -127,21 +127,51 @@ def recipeAi(model, meal_name, ingredients, expiring=[]):
     response = model.generate_content(prompt)
     return _parse_ai_json(response.text)
 
+# get current user
+current_user_data = st.session_state.get("user")
+
+if not current_user_data:
+    st.warning("User not found")
+else:
+    username = current_user_data.get("username")
+    
+    if st.button("Generate Meals"):
+        mealsGen = promptAi(model, username)
+        
+        if mealsGen:
+            st.subheader("Suggested Meals")
+            st.write(mealsGen) 
+            
+            first_meal = mealsGen[0]
+            st.info(f"Generating recipe for: {first_meal['name']}")
+            
+            full_recipe = recipeAi(model, first_meal['name'], first_meal['ingredients'])
+            
+            if full_recipe:
+                st.subheader("Recipe Instructions")
+                
+                if isinstance(full_recipe, dict) and "steps" in full_recipe:
+                    for step in full_recipe["steps"]:
+                        st.write(f"- {step}")
+                else:
+                    st.write(full_recipe)
+
+
 
 
 # ─── Example usage ─────
-if __name__ == "__main__":
-    aiMeals = promptAi(model, "amy_hall")
-    print (aiMeals)
-    st.text (aiMeals)
+#if __name__ == "__main__":
+ #   aiMeals = promptAi(model, "amy_hall")
+  #  print (aiMeals)
+   # st.text (aiMeals)
 
-    if aiMeals:
-        meal = aiMeals[0]
-        print(f"Generating recipe for: {meal["name"]}")
-        full_recipe = recipeAi(model, meal["name"], meal["ingredients"])
+   # if aiMeals:
+    #    meal = aiMeals[0]
+     #   print(f"Generating recipe for: {meal["name"]}")
+      #  full_recipe = recipeAi(model, meal["name"], meal["ingredients"])
         
-        print(full_recipe)
-        st.text(full_recipe)
+       # print(full_recipe)
+        #st.text(full_recipe)
 
 
 
