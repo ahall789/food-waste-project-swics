@@ -1,9 +1,7 @@
 import re
-import streamlit as st
 from services import get_user_by_username, update_user_food_preferences
-import os, streamlit as st
-st.sidebar.write("MONGO_URI:", os.getenv("MONGO_URI"))
-st.sidebar.write("DB_NAME:", os.getenv("DB_NAME"))
+import streamlit as st
+
 # ---------------- Login placeholder ----------------
 def get_current_username() -> str:
     """
