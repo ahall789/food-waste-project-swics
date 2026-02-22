@@ -1,14 +1,15 @@
 import re
-from services import get_user_by_username, update_user_food_preferences
 import streamlit as st
+from services import get_user_by_username, update_user_food_preferences
 
-# ---------------- Login placeholder ----------------
-def get_current_username() -> str:
-    """
-    Placeholder until real auth is wired in.
-    Replace this with your actual login/session value.
-    """
-    return "amy_hall"
+
+# ---------------- Auth ----------------
+def get_current_username() -> str | None:
+    """Gets the logged-in user from session state."""
+    user = st.session_state.get("user")
+    if not user:
+        return None
+    return user.get("username")
 
 # ---------------- Options ----------------
 DIETARY_OPTIONS = [
@@ -19,7 +20,8 @@ DIETARY_OPTIONS = [
 
 CUISINE_OPTIONS = [
     "Italian", "Indian", "Japanese", "Thai", "Mexican",
-    "Mediterranean", "Chinese", "Korean", "French", "British"
+    "Mediterranean", "Middle Eastern", "Chinese", "Korean",
+    "French", "British", "American", "Asian"
 ]
 
 COMMON_INGREDIENTS = [
@@ -64,80 +66,90 @@ def render_profile_page():
     st.title("Profile")
     st.caption("Update your dietary requirements and food preferences.")
 
+    # ── Guard: must be logged in ──────────────────────────────────────────
     username = get_current_username()
-    user = get_user_by_username(username)
-
-    if not user:
-        st.error("User profile not found.")
+    if not username:
+        st.warning("Please log in to view your profile.")
+        if st.button("Go to Login"):
+            st.switch_page("login.py")
         return
 
-    # Initialise tags once per session from DB
+    user = get_user_by_username(username)
+    if not user:
+        st.error("User profile not found in database.")
+        return
+
+    # Initialise disliked tags once per session from DB
     init_tags_from_db("disliked_tags", user.get("disliked_ingredients", []))
 
-    # Main form for dietary + cuisines (and Save)
-    with st.form("food_prefs_form", clear_on_submit=False):
-        dietary = st.multiselect(
-            "Dietary restrictions",
-            options=DIETARY_OPTIONS,
-            default=user.get("dietary_restrictions", [])
-        )
+    # ── Disliked ingredient tags (outside form so removal works instantly) ─
+    st.markdown("### Disliked ingredients")
 
-        cuisines = st.multiselect(
-            "Favourite cuisines",
-            options=CUISINE_OPTIONS,
-            default=user.get("favorite_cuisines", [])
-        )
-
-        st.markdown("### Disliked ingredients (tags)")
-
-        quick_pick = st.multiselect(
-            "Quick add (common ingredients)",
-            options=COMMON_INGREDIENTS,
-            default=[],
-            help="Select items to add them as tags."
-        )
-
-        # Add custom ingredient input (still inside the form)
-        new_ing = st.text_input(
-            "Add a custom ingredient",
-            placeholder="e.g. aubergine",
-            key="new_ing_input"
-        )
-
-        # Render current tags (chips)
-        tags = st.session_state.get("disliked_tags", [])
-        if tags:
-            st.caption("Click a chip to remove it (it updates immediately).")
-            cols = st.columns(4)
-            for i, tag in enumerate(tags):
-                col = cols[i % 4]
-                if col.form_submit_button(f"✕ {tag}", use_container_width=True):
-                    # Removing inside a form: update state and rerun after submit handling below
-                    remove_tag("disliked_tags", tag)
-                    st.session_state["_remove_rerun"] = True
-
-        save = st.form_submit_button("Save changes")
-
-    # Handle tag additions/removals outside the form submit logic
-    # (Streamlit forms only run on submit, so we apply changes after.)
-    if st.session_state.get("_remove_rerun"):
-        st.session_state.pop("_remove_rerun", None)
-        st.rerun()
-
+    quick_pick = st.multiselect(
+        "Quick add (common ingredients)",
+        options=COMMON_INGREDIENTS,
+        default=[],
+        help="Select items to add them as tags."
+    )
     if quick_pick:
         for t in quick_pick:
             add_tag("disliked_tags", t)
         st.rerun()
 
-    # Save changes
+    col_input, col_btn = st.columns([4, 1])
+    with col_input:
+        new_ing = st.text_input(
+            "Add a custom ingredient",
+            placeholder="e.g. aubergine",
+            key="new_ing_input",
+            label_visibility="collapsed"
+        )
+    with col_btn:
+        if st.button("Add", use_container_width=True):
+            if new_ing.strip():
+                add_tag("disliked_tags", new_ing)
+                st.session_state["new_ing_input"] = ""
+                st.rerun()
+            else:
+                st.toast("Please type an ingredient first.", icon="⚠️")
+
+    # Render tag chips — each button removes that tag instantly
+    tags = st.session_state.get("disliked_tags", [])
+    if tags:
+        st.caption("Click a tag to remove it.")
+        cols = st.columns(4)
+        for i, tag in enumerate(tags):
+            if cols[i % 4].button(f"✕ {tag}", key=f"remove_{tag}", use_container_width=True):
+                remove_tag("disliked_tags", tag)
+                st.rerun()
+    else:
+        st.caption("No disliked ingredients added yet.")
+
+    st.divider()
+
+    # ── Main preferences form ─────────────────────────────────────────────
+    # Filter defaults to only values in options — prevents crashes from old DB data
+    saved_dietary  = [d for d in user.get("dietary_restrictions", []) if d in DIETARY_OPTIONS]
+    saved_cuisines = [c for c in user.get("favorite_cuisines", [])    if c in CUISINE_OPTIONS]
+
+    with st.form("food_prefs_form", clear_on_submit=False):
+        dietary = st.multiselect(
+            "Dietary restrictions",
+            options=DIETARY_OPTIONS,
+            default=saved_dietary,
+        )
+
+        cuisines = st.multiselect(
+            "Favourite cuisines",
+            options=CUISINE_OPTIONS,
+            default=saved_cuisines,
+        )
+
+        save = st.form_submit_button("💾 Save changes", use_container_width=True)
+
     if save:
-        # Add anything typed but not explicitly “added”
-        add_tag("disliked_tags", st.session_state.get("new_ing_input", ""))
-
-        # Normalise + dedupe dietary/cuisines too
-        dietary_clean = sorted(set([d.strip() for d in dietary if d.strip()]))
+        dietary_clean  = sorted(set([d.strip() for d in dietary if d.strip()]))
         cuisines_clean = sorted(set([c.strip() for c in cuisines if c.strip()]))
-
         disliked_clean = st.session_state.get("disliked_tags", [])
 
         ok = update_user_food_preferences(
@@ -148,10 +160,13 @@ def render_profile_page():
         )
 
         if not ok:
-            st.error("Save failed (user not found).")
+            st.error("Save failed — user not found.")
         else:
-            st.success("Saved ✅")
-            st.session_state.new_ing_input = ""
+            # Keep session state in sync
+            st.session_state["user"]["dietary_restrictions"] = dietary_clean
+            st.session_state["user"]["favorite_cuisines"]    = cuisines_clean
+            st.session_state["user"]["disliked_ingredients"] = disliked_clean
+            st.success("Profile saved ✅")
             st.rerun()
 
 render_profile_page()
