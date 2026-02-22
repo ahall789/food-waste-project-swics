@@ -34,3 +34,4 @@ ingredients = st.Page(
     title="Ingredients",
     default=(role == None),
 )
+
