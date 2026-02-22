@@ -1,8 +1,5 @@
-import os
 import streamlit as st
 from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError, ConfigurationError
-import certifi
 
 @st.cache_resource
 def get_db():

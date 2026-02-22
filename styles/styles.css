@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── global ── */
+html, body, [class*="css"] {
+    font-family: 'DM Sans', sans-serif;
+    background-color: #F7F4EE;
+}
+
+/* ── hide default streamlit chrome ── */
+#MainMenu, footer, header { visibility: hidden; }
+
+/* ── hero banner ── */
+.hero {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+}
+
+.hero-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+.hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem;
+    color: #1A3A2A;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+.hero p {
+    color: #5A7A65;
+    font-size: 1rem;
+    font-weight: 300;
+    margin-top: 0.4rem;
+}
+
+/* ── card ── */
+.card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 2rem 2.2rem 2.4rem;
+    box-shadow: 0 4px 32px rgba(30, 80, 50, 0.08);
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+/* ── tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: #EFF7EE;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 10px;
+    font-weight: 500;
+    color: #5A7A65;
+    padding: 0.5rem 1.5rem;
+}
+.stTabs [aria-selected="true"] {
+    background: #2D6A4F !important;
+    color: white !important;
+}
+
+/* ── inputs ── */
+.stTextInput > div > div > input,
+.stSelectbox > div > div {
+    border-radius: 10px !important;
+    border: 1.5px solid #D4E8D8 !important;
+    background: #FAFFF9 !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+.stTextInput > div > div > input:focus {
+    border-color: #2D6A4F !important;
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.12) !important;
+}
+
+/* ── primary button ── */
+.stButton > button[kind="primary"],
+.stButton > button {
+    background: #2D6A4F !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0.6rem 1.2rem !important;
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+    width: 100%;
+    transition: background 0.2s, transform 0.15s;
+    font-family: 'DM Sans', sans-serif !important;
+}
+.stButton > button:hover {
+    background: #1A4A34 !important;
+    transform: translateY(-1px);
+}
+
+/* ── multiselect tags ── */
+.stMultiSelect span[data-baseweb="tag"] {
+    background: #D4F0E0 !important;
+    color: #1A3A2A !important;
+    border-radius: 8px !important;
+}
+
+/* ── stat pills (welcome screen) ── */
+.stat-row {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 1.2rem;
+}
+.stat-pill {
+    background: #EFF7EE;
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    color: #2D6A4F;
+    font-weight: 500;
+    border: 1px solid #C8E6C9;
+}
+
+/* ── welcome card ── */
+.welcome-card {
+    background: linear-gradient(135deg, #2D6A4F 0%, #40916C 100%);
+    border-radius: 20px;
+    padding: 2rem 2.2rem;
+    color: white;
+    text-align: center;
+    max-width: 440px;
+    margin: 0 auto;
+}
+.welcome-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    margin-bottom: 0.3rem;
+}
+.welcome-card p { opacity: 0.88; font-size: 0.95rem; }
+.welcome-meta {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+.welcome-tag {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.82rem;
+}
+
+/* ── error / success ── */
+.stAlert { border-radius: 12px !important; }
+
+/* ── label ── */
+.stTextInput label, .stSelectbox label, .stMultiSelect label {
+    font-weight: 500;
+    color: #1A3A2A;
+    font-size: 0.9rem;
+}
+
+/* ── divider text ── */
+.divider {
+    text-align: center;
+    color: #9EB8A4;
+    font-size: 0.82rem;
+    margin: 0.5rem 0;
+}
+
+/* ── footer note ── */
+.footer-note {
+    text-align: center;
+    color: #9EB8A4;
+    font-size: 0.78rem;
+    margin-top: 2.5rem;
+}
