@@ -1,14 +1,22 @@
 import os
+import re
+import json
 import pymongo #???
+from pymongo import MongoClient #???
 import google.generativeai as genai
+from streamlit import st
 
-# connect to db
-MONGO_URI = "mongodb://localhost:27017"
-DB_NAME = "wasteless"
+def get_db():
+    try:
+        # Use your Atlas connection string here
+        client = MongoClient("mongodb+srv://sakshikokane_db_user:xv2RDFTWbfZOAJQI@wastesless.mdemthv.mongodb.net/?appName=Wastesless", serverSelectionTimeoutMS=5000)
+        client.server_info() 
+        return client["wasteless"]
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return None
 
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-
+db = get_db()
 userCol = db.users
 ingredientCol = db.ingredient_logs
 mealCol = db.meal_history
@@ -26,31 +34,39 @@ genai.configure(api_key = API_KEY)
 # model version
 model = genai.GenerativeModel("gemini-flash-latest")
 
+def parse_ai_json(text):
+    try:
+        clean_text = re.sub(r'```(?:json)?\s*(.*?)\s*```', r'\1', text, flags=re.DOTALL)
+        return json.loads(clean_text.strip())
+    except Exception as e:
+        print(f"JSON Parsing Error: {e}")
+        return None
+
 # input to set prompt
 def promptAi(model, username):
     # get user profile - saved as user
     user = userCol.find_one({"username": username})
+
     # user id saved as user_id - get users ingredients
     fridge = ingredientCol.find({"user_id": user["_id"]})
-    diet = userCol.find("dietary_restrictions", [])
+    diet = user.get("dietary_restrictions", [])
 
     ingredients = []
     expiring = []
 
     for i in fridge:
-        for j in i["ingredients"]:
-            ingredients.append(j["name"])
-            if j.get("is_expiring", True): # must add
-                expiring.append(j["name"])
+        for j in i.get["ingredients", []]:
+            name = item["name"]
+            ingredients.append(name)
+            if j.get("is_expiring", False):
+                expiring.append(name)
 
     # prompt
     ingredients_str = ", ".join(ingredients) if ingredients else "none"
     expiring_str = ", ".join(expiring) if expiring else "none"
     dietary_str = ", ".join(diet) if diet else "none"
-    mode_note = f"CRITICAL: Every meal MUST feature at least one of these expiring ingredients: {expiring_str}." \
-        if expiring else ""
 
-    prompt = f """
+    prompt = f"""
 
 You are a helpful meal planning assistant focused on reducing food waste.
 
@@ -75,14 +91,51 @@ Return ONLY valid JSON — no explanation, no markdown, no extra text:
     }}
 ]
 """
+    response = model.generate_content(prompt)
+    return parse_ai_json(response.text)
 
 
+def recipeAi(model, meal_name, ingredients, expiring=[]):
+    expiring_str = ", ".join(expiring) if expiring else "none"
+
+    # save in recipe_json
+    prompt = f"""
+    Write a beginner-friendly step-by-step recipe for: {meal_name}
+    Available ingredients: {", ".join(ingredients)}
+    Key expiring ingredients to feature prominently: {expiring_str}
+
+    Rules:
+    - Write exactly 4-6 clear steps.
+    - Each step starts with a verb (Chop, Heat, Mix, etc.).
+    - Use simple language a first-time cook can follow.
+    - If there are expiring ingredients, use them early in the recipe.
+    Return ONLY valid JSON — no markdown, no extra text:
+    {{
+    "steps": [
+    "Step description here.",
+    "Next step here."
+    ]
+    }}
+    """
 
     response = model.generate_content(prompt)
-    print (response.text)
+    return _parse_ai_json(response.text)
 
-    # save to db cache
-    #recipeHistCol.update_one(---)
+
+
+# ─── Example usage ─────
+if __name__ == "__main__":
+    aiMeals = promptAi(model, "amy_hall")
+    print (aiMeals)
+
+    if aiMeals:
+        meal = aiMeals[0]
+        print(f"Generating recipe for: {meal["name"]}")
+        full_recipe = recipeAi(model, meal["name"], meal["ingredients"])
+        
+        print(full_recipe)
+
+
 
 
 ## generate content
