@@ -142,7 +142,6 @@ if __name__ == "__main__":
 
 
 
-
 ## generate content
 #try:
 #    prompt = "Output a 2 sentence story."

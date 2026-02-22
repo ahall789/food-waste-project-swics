@@ -9,7 +9,7 @@ def get_db():
         client.server_info()          # triggers connection check
         return client["wasteless"]
     except Exception:
-        return None
+        return "⚠️ Cannot connect to database. Is MongoDB running?"
 
 def get_collection(name: str):
     return get_db()[name]
