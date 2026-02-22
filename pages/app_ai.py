@@ -1,8 +1,8 @@
 import os
 import re
 import json
-import pymongo #???
-from pymongo import MongoClient #???
+import pymongo 
+from pymongo import MongoClient 
 import google.generativeai as genai
 import streamlit as st
 
@@ -59,8 +59,8 @@ def promptAi(model, username):
     expiring = []
 
     for i in fridge:
-        for j in i.get["ingredients", []]:
-            name = item.get("name")
+        for j in i.get("ingredients", []):
+            name = j.get("name")
             ingredients.append(name)
             if j.get("is_expiring", False):
                 expiring.append(name)
