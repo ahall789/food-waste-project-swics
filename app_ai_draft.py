@@ -178,7 +178,7 @@ Return ONLY valid JSON — no markdown, no extra text:
 st.title("AI Meal Planner")
 st.caption(f"Logged in as **{username}**")
 
-if st.button("Generate 3 meal ideas", type="primary"):
+if st.button("Generate meal ideas", type="primary"):
     meals, all_ings, expiring = promptAi(model, username)
     if meals:
         st.session_state["ai_meals"] = meals
