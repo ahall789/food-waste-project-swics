@@ -6,6 +6,8 @@ from pymongo import MongoClient #???
 import google.generativeai as genai
 import streamlit as st
 
+st.set_page_config(page_title="The title", layout="centered")
+
 def get_db():
     try:
         # Use your Atlas connection string here
@@ -19,8 +21,8 @@ def get_db():
 db = get_db()
 userCol = db.users
 ingredientCol = db.ingredient_logs
-mealCol = db.meal_history
-recipeHistCol = db.recipes_cache
+mealCol = db.meal_history # unused
+recipeHistCol = db.recipes_cache # unused
 
 
 # set the API key
@@ -39,7 +41,7 @@ def parse_ai_json(text):
         clean_text = re.sub(r'```(?:json)?\s*(.*?)\s*```', r'\1', text, flags=re.DOTALL)
         return json.loads(clean_text.strip())
     except Exception as e:
-        print(f"JSON Parsing Error: {e}")
+        st.error(f"JSON Parsing Error: {e}")
         return None
 
 # input to set prompt
@@ -48,7 +50,7 @@ def promptAi(model, username):
     user = userCol.find_one({"username": username})
 
     if not user:
-        print(f"Error: User not found")
+        st.warning(f"Error: User not found")
         return None
 
     # user id saved as user_id - get users ingredients
@@ -131,6 +133,7 @@ def recipeAi(model, meal_name, ingredients, expiring=[]):
 if __name__ == "__main__":
     aiMeals = promptAi(model, "amy_hall")
     print (aiMeals)
+    st.text (aiMeals)
 
     if aiMeals:
         meal = aiMeals[0]
@@ -138,6 +141,8 @@ if __name__ == "__main__":
         full_recipe = recipeAi(model, meal["name"], meal["ingredients"])
         
         print(full_recipe)
+        st.text(full_recipe)
+
 
 
 
