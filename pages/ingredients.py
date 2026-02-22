@@ -14,11 +14,18 @@ else:
 
 st.set_page_config(page_title='Add Ingredients')
 
+st.markdown(f"""
+<div class="hero">
+    <h1>Pantry</h1>
+</div>
+<div class="welcome-card">
+    <h2>What is in your kitchen, {user['username']}? 👋</h2>
+</div>
+""", unsafe_allow_html=True)
 
-st.title('What is in your kitchen?')
-st.write(f"You are logged in as {user['username']}"".")
 st.subheader('Your Ingredients')
 
+ingredients = get_user_ingredients()
 if 'ingredient_rows' not in st.session_state:
     st.session_state.ingredient_rows = [{
         'name': '',

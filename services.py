@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Any, Optional, Dict, List
 from db import get_collection
@@ -25,10 +26,9 @@ def update_user_food_preferences(
     return result.matched_count == 1
 
 def get_user_ingredients(username: str) -> List[Dict[str, Any]]:
-    users = get_collection("users")
     logs = get_collection("ingredient_logs")
 
-    user = users.find_one({"username": username}, {"_id": 1})
+    user = get_user_by_username(username)
     if not user:
         return []
 
@@ -39,4 +39,26 @@ def get_user_ingredients(username: str) -> List[Dict[str, Any]]:
 
     return ingredient_log.get("ingredients", []) if ingredient_log else []
 
-def
+def set_user_ingredients(username: str, ingredients: List[Dict[str, Any]]) -> bool:
+    logs = get_collection("ingredient_logs")
+    user = get_user_by_username(username)
+
+    if not user:
+        print(f"User {username} not found.")
+        return False
+    if not ingredients:
+        print(f"Ingredients not found.")
+        return False
+
+    new_log = {
+        "user_id": user["_id"],
+        "session_id": str(uuid.uuid4()),
+        "created_at": datetime.utcnow(),
+        "ingredients": ingredients
+    }
+
+    result = logs.insert_one(new_log)
+    if result.acknowledged and result.inserted_id:
+        return True
+
+    return False
